@@ -1,7 +1,6 @@
 #include "panelview.h"
 #include "ui_panelview.h"
 
-#include <QKeyEvent>
 #include <QMainWindow>
 
 PanelView::PanelView(QWidget *parent)
@@ -71,14 +70,25 @@ void PanelView::changeDir(const QModelIndex &index)
             ui->tableView->setRootIndex(index);
             ui->tableView->selectRow(0);
         }
+        ui->lineEdit->setText(model->filePath(ui->tableView->rootIndex()));
     }
 }
 
-void PanelView::chFocus()
+void PanelView::focusInEvent(QFocusEvent *focusEvent)
 {
-    ui->tableView->activateWindow();
-    ui->tableView->raise();
+    Q_UNUSED(focusEvent);
+    emit setSource();
     ui->tableView->setFocus();
+}
+
+QFileInfo PanelView::selectedFileInfo()
+{
+    return model->fileInfo(ui->tableView->currentIndex());
+}
+
+QFileInfo PanelView::currentDirInfo()
+{
+    return model->fileInfo(ui->tableView->currentIndex().parent());
 }
 
 void PanelView::action(const QModelIndex &index)

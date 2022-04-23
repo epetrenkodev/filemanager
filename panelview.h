@@ -15,16 +15,23 @@ class PanelView : public QWidget
 public:
     explicit PanelView(QWidget *parent = nullptr);
     ~PanelView();
-    void chFocus();
+    QFileInfo selectedFileInfo();
+    QFileInfo currentDirInfo();
 
 private:
     Ui::PanelView *ui;
+
     QFileSystemModel *model = nullptr;
 
     void initModel();
     void initView();
     void initConnect();
     void changeDir(const QModelIndex &index);
+
+    virtual void focusInEvent(QFocusEvent *focusEvent);
+
+signals:
+    void setSource();
 
 private slots:
     void action(const QModelIndex &index);

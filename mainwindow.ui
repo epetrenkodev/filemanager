@@ -34,14 +34,14 @@
     <item>
      <widget class="PanelView" name="leftPanel" native="true">
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
      </widget>
     </item>
     <item>
      <widget class="PanelView" name="rightPanel" native="true">
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
      </widget>
     </item>
