@@ -1,6 +1,8 @@
 #ifndef PANELVIEW_H
 #define PANELVIEW_H
 
+#include "fsmodel.h"
+
 #include <QFileSystemModel>
 #include <QWidget>
 
@@ -21,14 +23,14 @@ public:
 private:
     Ui::PanelView *ui;
 
-    QFileSystemModel *model = nullptr;
+    FSModel *model = nullptr;
 
     void initModel();
     void initView();
     void initConnect();
     void changeDir(const QModelIndex &index);
 
-    virtual void focusInEvent(QFocusEvent *focusEvent);
+    virtual void focusInEvent(QFocusEvent *focusEvent) override;
 
 signals:
     void setSource();
@@ -37,6 +39,7 @@ private slots:
     void action(const QModelIndex &index);
     void on_homeClicked();
     void loaded();
+    void select(QModelIndex);
 };
 
 #endif // PANELVIEW_H

@@ -21,7 +21,7 @@ PanelView::~PanelView()
 
 void PanelView::initModel()
 {
-    model = new QFileSystemModel(this);
+    model = new FSModel(this);
     model->setRootPath(QDir::rootPath());
     model->setFilter(QDir::AllEntries | QDir::NoDot);
 }
@@ -49,6 +49,7 @@ void PanelView::initConnect()
 {
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), SLOT(action(QModelIndex)));
     connect(ui->tableView, SIGNAL(activated(QModelIndex)), SLOT(action(QModelIndex)));
+    connect(ui->tableView, SIGNAL(selectFile(QModelIndex)), SLOT(select(QModelIndex)));
 
     connect(ui->rootButton, SIGNAL(clicked()), ui->tableView, SLOT(reset()));
     connect(ui->homeButton, SIGNAL(clicked()), SLOT(on_homeClicked()));
@@ -107,4 +108,10 @@ void PanelView::on_homeClicked()
 void PanelView::loaded()
 {
     ui->tableView->selectRow(0);
+}
+
+void PanelView::select(QModelIndex index)
+{
+    model->toggleIndex(index);
+    ui->tableView->selectRow(index.row());
 }

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "fileutils.h"
 #include "ui_mainwindow.h"
 
 #include <QMessageBox>
@@ -106,26 +107,32 @@ void MainWindow::remove()
     QFileInfo fileInfo = source->selectedFileInfo();
     QString name = fileInfo.fileName();
     QString fullName = fileInfo.absoluteFilePath();
-    if (name != ".." && name != "") {
-        if (fileInfo.isDir()) {
-            QMessageBox msgBox(QMessageBox::Information,
-                               "File Manager",
-                               "Удалить папку " + fullName + " со всем содержимым?",
-                               QMessageBox::Ok | QMessageBox::Cancel);
-            if (msgBox.exec() == QMessageBox::Ok) {
-                QDir dir(fullName);
-                removeDir(dir);
-            }
-        } else {
-            QMessageBox msgBox(QMessageBox::Information,
-                               "File Manager",
-                               "Удалить " + fullName + "?",
-                               QMessageBox::Ok | QMessageBox::Cancel);
-            if (msgBox.exec() == QMessageBox::Ok) {
-                QFile::moveToTrash(fullName);
-            }
-        }
-    }
+    FileUtils f;
+    f.remove(QStringList() << fullName);
+
+    //    QFileInfo fileInfo = source->selectedFileInfo();
+    //    QString name = fileInfo.fileName();
+    //    QString fullName = fileInfo.absoluteFilePath();
+    //    if (name != ".." && name != "") {
+    //        if (fileInfo.isDir()) {
+    //            QMessageBox msgBox(QMessageBox::Information,
+    //                               "File Manager",
+    //                               "Удалить папку " + fullName + " со всем содержимым?",
+    //                               QMessageBox::Ok | QMessageBox::Cancel);
+    //            if (msgBox.exec() == QMessageBox::Ok) {
+    //                QDir dir(fullName);
+    //                removeDir(dir);
+    //            }
+    //        } else {
+    //            QMessageBox msgBox(QMessageBox::Information,
+    //                               "File Manager",
+    //                               "Удалить " + fullName + "?",
+    //                               QMessageBox::Ok | QMessageBox::Cancel);
+    //            if (msgBox.exec() == QMessageBox::Ok) {
+    //                QFile::moveToTrash(fullName);
+    //            }
+    //        }
+    //    }
 }
 
 void MainWindow::setSource()
@@ -135,6 +142,8 @@ void MainWindow::setSource()
         source = static_cast<PanelView *>(sender());
     }
 }
+
+void MainWindow::selectFile(QModelIndex) {}
 
 bool MainWindow::removeDir(QDir dir)
 {

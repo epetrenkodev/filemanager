@@ -3,5 +3,6 @@
         <file>icons/exit.ico</file>
         <file>icons/home.ico</file>
         <file>icons/app.png</file>
+        <file>icons/delete.ico</file>
     </qresource>
 </RCC>

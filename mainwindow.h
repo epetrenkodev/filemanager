@@ -45,5 +45,6 @@ private slots:
     void mkdir();
     void remove();
     void setSource();
+    void selectFile(QModelIndex);
 };
 #endif // MAINWINDOW_H
