@@ -34,17 +34,20 @@ private:
     PanelView *source;
     PanelView *target;
 
-    bool copyDir(const QDir srcDir, const QDir dstDir);
-    bool removeDir(QDir dir);
+    void intiShortcut();
+    void initConnect();
+
+    //    bool copyDir(const QDir srcDir, const QDir dstDir);
+    //    bool removeDir(QDir dir);
 
 private slots:
-    void view();
-    void edit();
+    //    void view();
+    //    void edit();
     void copy();
-    void rename();
-    void mkdir();
+    //    void rename();
+    //    void mkdir();
     void remove();
-    void setSource();
-    void selectFile(QModelIndex);
+    void setSourcePanel();
+    //    void selectFile(QModelIndex);
 };
 #endif // MAINWINDOW_H

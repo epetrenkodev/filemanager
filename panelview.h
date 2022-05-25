@@ -3,7 +3,6 @@
 
 #include "fsmodel.h"
 
-#include <QFileSystemModel>
 #include <QWidget>
 
 namespace Ui {
@@ -15,20 +14,21 @@ class PanelView : public QWidget
     Q_OBJECT
 
 public:
+    FSModel *model = nullptr;
+
     explicit PanelView(QWidget *parent = nullptr);
     ~PanelView();
-    QFileInfo selectedFileInfo();
-    QFileInfo currentDirInfo();
+
+    QModelIndex selectIndex();
+    QString currentPath();
 
 private:
     Ui::PanelView *ui;
 
-    FSModel *model = nullptr;
-
     void initModel();
     void initView();
     void initConnect();
-    void changeDir(const QModelIndex &index);
+    void changeCurrentPath(const QModelIndex &index);
 
     virtual void focusInEvent(QFocusEvent *focusEvent) override;
 
@@ -38,8 +38,8 @@ signals:
 private slots:
     void action(const QModelIndex &index);
     void on_homeClicked();
-    void loaded();
-    void select(QModelIndex);
+    void dirLoaded();
+    void selectFile(QModelIndex);
 };
 
 #endif // PANELVIEW_H

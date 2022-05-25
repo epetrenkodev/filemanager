@@ -8,9 +8,9 @@ class TableView : public QTableView
     Q_OBJECT
 
 public:
+    int prevDirRow = 0;
     TableView(QWidget *parent = nullptr);
 
-    // QWidget interface
 protected:
     virtual void mousePressEvent(QMouseEvent *event) override;
 

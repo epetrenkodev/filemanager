@@ -71,7 +71,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QLineEdit" name="lineEdit">
+    <widget class="QLineEdit" name="currentPath">
      <property name="focusPolicy">
       <enum>Qt::NoFocus</enum>
      </property>

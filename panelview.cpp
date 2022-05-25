@@ -19,6 +19,17 @@ PanelView::~PanelView()
     delete ui;
 }
 
+QModelIndex PanelView::selectIndex()
+{
+    return ui->tableView->currentIndex();
+}
+
+QString PanelView::currentPath()
+{
+    return ui->currentPath->text();
+}
+
+// Init
 void PanelView::initModel()
 {
     model = new FSModel(this);
@@ -49,32 +60,36 @@ void PanelView::initConnect()
 {
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), SLOT(action(QModelIndex)));
     connect(ui->tableView, SIGNAL(activated(QModelIndex)), SLOT(action(QModelIndex)));
-    connect(ui->tableView, SIGNAL(selectFile(QModelIndex)), SLOT(select(QModelIndex)));
+    connect(ui->tableView, SIGNAL(selectFile(QModelIndex)), SLOT(selectFile(QModelIndex)));
 
     connect(ui->rootButton, SIGNAL(clicked()), ui->tableView, SLOT(reset()));
     connect(ui->homeButton, SIGNAL(clicked()), SLOT(on_homeClicked()));
 
-    connect(model, SIGNAL(directoryLoaded(QString)), this, SLOT(loaded()));
+    connect(model, SIGNAL(directoryLoaded(QString)), this, SLOT(dirLoaded()));
 }
 
-void PanelView::changeDir(const QModelIndex &index)
+// Private function
+void PanelView::changeCurrentPath(const QModelIndex &index)
 {
-    QFileInfo fileinfo(model->fileInfo(index));
-    if (fileinfo.isDir()) {
-        if (fileinfo.fileName() == "..") {
-            QDir dir = fileinfo.dir();
-            dir.cdUp();
-            QModelIndex parent = model->index(dir.absolutePath());
-            ui->tableView->setRootIndex(parent);
-            ui->tableView->selectRow(0);
-        } else {
-            ui->tableView->setRootIndex(index);
-            ui->tableView->selectRow(0);
-        }
-        ui->lineEdit->setText(model->filePath(ui->tableView->rootIndex()));
+    QString dirName = model->fileInfo(index).fileName();
+    QModelIndex newIndex;
+    if (dirName == "..") {
+        newIndex = index.parent().parent();
+        ui->tableView->prevDirRow = index.parent().row();
+    } else {
+        newIndex = index;
+        ui->tableView->prevDirRow = 0;
     }
+
+    ui->tableView->setRootIndex(newIndex);
+    ui->tableView->selectRow(ui->tableView->prevDirRow);
+
+    ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
+
+    model->clearSelect();
 }
 
+// Events
 void PanelView::focusInEvent(QFocusEvent *focusEvent)
 {
     Q_UNUSED(focusEvent);
@@ -82,35 +97,27 @@ void PanelView::focusInEvent(QFocusEvent *focusEvent)
     ui->tableView->setFocus();
 }
 
-QFileInfo PanelView::selectedFileInfo()
-{
-    return model->fileInfo(ui->tableView->currentIndex());
-}
-
-QFileInfo PanelView::currentDirInfo()
-{
-    return model->fileInfo(ui->tableView->currentIndex().parent());
-}
-
+// Slots
 void PanelView::action(const QModelIndex &index)
 {
     QFileInfo fileinfo = model->fileInfo(index);
     if (fileinfo.isDir()) {
-        changeDir(index);
+        changeCurrentPath(index);
     }
 }
 
 void PanelView::on_homeClicked()
 {
     ui->tableView->setRootIndex(model->index(QDir::homePath()));
+    ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
 }
 
-void PanelView::loaded()
+void PanelView::dirLoaded()
 {
-    ui->tableView->selectRow(0);
+    ui->tableView->selectRow(ui->tableView->prevDirRow);
 }
 
-void PanelView::select(QModelIndex index)
+void PanelView::selectFile(QModelIndex index)
 {
     model->toggleIndex(index);
     ui->tableView->selectRow(index.row());
