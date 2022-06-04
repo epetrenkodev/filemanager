@@ -24,6 +24,7 @@ public:
 
 private:
     Ui::PanelView *ui;
+    QPoint m_dragStart;
 
     void initModel();
     void initView();
@@ -34,12 +35,22 @@ private:
 
 signals:
     void setSource();
+    void dragCopy();
 
 private slots:
     void action(const QModelIndex &index);
     void on_homeClicked();
     void dirLoaded();
     void selectFile(QModelIndex);
+
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
+    // QWidget interface
+protected:
+    virtual void dragEnterEvent(QDragEnterEvent *event) override;
+    virtual void dropEvent(QDropEvent *event) override;
 };
 
 #endif // PANELVIEW_H

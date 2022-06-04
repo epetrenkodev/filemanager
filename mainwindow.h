@@ -44,8 +44,8 @@ private slots:
     //    void view();
     //    void edit();
     void copy();
-    //    void rename();
-    //    void mkdir();
+    void rename();
+    void mkdir();
     void remove();
     void setSourcePanel();
     //    void selectFile(QModelIndex);

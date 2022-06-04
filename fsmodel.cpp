@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QBrush>
 #include <QFile>
+#include <QMessageBox>
 
 FSModel::FSModel(QObject *parent)
     : QFileSystemModel{parent}
@@ -66,24 +67,103 @@ void FSModel::copyFiles(QModelIndex source, QString destinationDir)
 {
     if (destinationDir.isEmpty())
         return;
-    QString sPath = filePath(source.parent());
 
     QFileInfoList list;
     if (selectedIndex.isEmpty()) {
         list = getList(QStringList(filePath(source)));
     } else {
+        QStringList tmpList;
         for (QModelIndex index : selectedIndex) {
-            list << fileInfo(index);
+            tmpList << fileInfo(index).filePath();
         }
+        list = getList(tmpList);
     }
 
     std::sort(list.begin(), list.end(), [](auto d1, auto d2) { return d1.path() < d2.path(); });
 
     int pos = list[0].path().size();
+    int count = 1;
+    QProgressDialog progress;
+    progress.setMinimumDuration(0);
+    progress.setCancelButtonText("Отмена");
+    progress.setFixedWidth(300);
+    progress.setWindowTitle("Копирование");
+    progress.setWindowIcon(QIcon(":/icons/copy.ico"));
+    progress.setMaximum(list.count());
+
     for (auto &f : list) {
-        if (f.fileName() != "..")
-            qDebug() << "Copy " << sPath + f.filePath().mid(pos) << "==> "
-                     << destinationDir + f.filePath().mid(pos);
+        progress.setLabelText(f.filePath() + " -> " + destinationDir + f.filePath().mid(pos));
+        progress.setValue(count++);
+        qApp->processEvents();
+        if (progress.wasCanceled())
+            break;
+        if (f.fileName() != "..") {
+            if (f.isDir()) {
+                QDir().mkdir(destinationDir + '/' + f.filePath().mid(pos));
+            } else {
+                QFile::copy(f.filePath(), destinationDir + '/' + f.filePath().mid(pos));
+            }
+        }
+    }
+    selectedIndex.clear();
+    emit dataChanged(QModelIndex(), QModelIndex());
+}
+
+void FSModel::renameFiles(QModelIndex source, QString destinationDir)
+{
+    if (destinationDir.isEmpty())
+        return;
+
+    QFileInfoList list;
+    if (selectedIndex.isEmpty()) {
+        list = getList(QStringList(filePath(source)));
+    } else {
+        QStringList tmpList;
+        for (QModelIndex index : selectedIndex) {
+            tmpList << fileInfo(index).filePath();
+        }
+        list = getList(tmpList);
+    }
+
+    std::sort(list.begin(), list.end(), [](auto d1, auto d2) { return d1.path() > d2.path(); });
+
+    int pos = list[0].path().size();
+    int count = 1;
+    QProgressDialog progress;
+    progress.setMinimumDuration(0);
+    progress.setCancelButtonText("Отмена");
+    progress.setFixedWidth(300);
+    progress.setWindowTitle("Перемещение");
+    progress.setWindowIcon(QIcon(":/icons/move.ico"));
+    progress.setMaximum(list.count());
+
+    for (auto &f : list) {
+        progress.setLabelText(f.filePath() + " -> " + destinationDir + f.filePath().mid(pos));
+        progress.setValue(count++);
+        qApp->processEvents();
+        if (progress.wasCanceled())
+            break;
+        if (f.fileName() != "..") {
+            if (f.isDir()) {
+                QDir().mkdir(destinationDir + f.filePath().mid(pos));
+                QDir().rmdir(f.filePath());
+            } else {
+                QFile::rename(f.filePath(), destinationDir + f.filePath().mid(pos));
+            }
+        }
+    }
+    selectedIndex.clear();
+    emit dataChanged(QModelIndex(), QModelIndex());
+}
+
+void FSModel::mkDir(QModelIndex parent, QString dirName)
+{
+    if (!mkdir(parent, dirName).isValid()) {
+        QMessageBox(QMessageBox::Warning,
+                    "File Manager",
+                    "Каталог с таким именем уже существует!",
+                    QMessageBox::Ok)
+            .exec();
     }
 }
 

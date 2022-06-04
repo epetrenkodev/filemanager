@@ -12,17 +12,20 @@ SOURCES += \
     fsmodel.cpp \
     main.cpp \
     mainwindow.cpp \
+    makedirdialog.cpp \
     panelview.cpp \
     tableview.cpp
 
 HEADERS += \
     fsmodel.h \
     mainwindow.h \
+    makedirdialog.h \
     panelview.h \
     tableview.h
 
 FORMS += \
     mainwindow.ui \
+    makedirdialog.ui \
     panelview.ui
 
 # Default rules for deployment.

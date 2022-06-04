@@ -1,13 +1,23 @@
 #include "panelview.h"
+#include "mainwindow.h"
 #include "ui_panelview.h"
 
+#include <QDebug>
+#include <QDesktopServices>
+#include <QDrag>
 #include <QMainWindow>
+#include <QMimeData>
+#include <QMouseEvent>
+#include <QProcess>
+#include <QUrl>
 
 PanelView::PanelView(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::PanelView)
 {
     ui->setupUi(this);
+
+    setAcceptDrops(true);
 
     initModel();
     initView();
@@ -54,11 +64,12 @@ void PanelView::initView()
     ui->tableView->verticalHeader()->setVisible(false);
     ui->tableView->verticalHeader()->setMinimumSectionSize(16);
     ui->tableView->verticalHeader()->setDefaultSectionSize(16);
+
+    ui->tableView->viewport()->installEventFilter(this);
 }
 
 void PanelView::initConnect()
 {
-    connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), SLOT(action(QModelIndex)));
     connect(ui->tableView, SIGNAL(activated(QModelIndex)), SLOT(action(QModelIndex)));
     connect(ui->tableView, SIGNAL(selectFile(QModelIndex)), SLOT(selectFile(QModelIndex)));
 
@@ -103,6 +114,8 @@ void PanelView::action(const QModelIndex &index)
     QFileInfo fileinfo = model->fileInfo(index);
     if (fileinfo.isDir()) {
         changeCurrentPath(index);
+    } else if (fileinfo.isFile()) {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fileinfo.filePath()));
     }
 }
 
@@ -115,10 +128,57 @@ void PanelView::on_homeClicked()
 void PanelView::dirLoaded()
 {
     ui->tableView->selectRow(ui->tableView->prevDirRow);
+    model->sort(0, Qt::AscendingOrder);
 }
 
 void PanelView::selectFile(QModelIndex index)
 {
     model->toggleIndex(index);
     ui->tableView->selectRow(index.row());
+}
+
+bool PanelView::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched == ui->tableView->viewport()) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+            if (mouseEvent->button() == Qt::MouseButton::LeftButton) {
+                m_dragStart = mouseEvent->pos();
+            }
+        } else if (event->type() == QEvent::MouseMove) {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+            if ((mouseEvent->buttons() & Qt::LeftButton)
+                && QApplication::startDragDistance()
+                       <= (mouseEvent->pos() - m_dragStart).manhattanLength()) {
+                QDrag *drag = new QDrag(this);
+                QMimeData *mimeData = new QMimeData;
+                QList<QUrl> list;
+                list.append(QUrl::fromLocalFile(model->fileInfo(selectIndex()).filePath()));
+                mimeData->setUrls(list);
+                drag->setMimeData(mimeData);
+
+                drag->exec(Qt::MoveAction);
+            }
+        }
+    }
+    return false;
+}
+
+void PanelView::dragEnterEvent(QDragEnterEvent *event)
+{
+    QStringList formats = event->mimeData()->formats();
+    if (formats.contains("text/uri-list")) {
+        event->acceptProposedAction();
+    }
+}
+
+void PanelView::dropEvent(QDropEvent *event)
+{
+    //    qDebug() << event->mimeData()->urls();
+    //    QString name(event->mimeData()->urls()[0].toLocalFile());
+    //    QModelIndex modelIndex(model->index(name));
+    //    qDebug() << "copy " << model->fileInfo(modelIndex).filePath() << " to " << currentPath();
+    //    model->copyFiles(modelIndex, currentPath());
+    emit dragCopy();
+    event->acceptProposedAction();
 }

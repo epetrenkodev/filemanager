@@ -13,6 +13,8 @@ public:
     void clearSelect();
     void removeFiles(QModelIndex file);
     void copyFiles(QModelIndex source, QString destinationDir);
+    void renameFiles(QModelIndex source, QString destinationDir);
+    void mkDir(QModelIndex parent, QString dirName);
     virtual QVariant data(const QModelIndex &index, int role) const override;
 
 private:
