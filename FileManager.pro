@@ -9,19 +9,19 @@ CONFIG += c++14
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    fsmodel.cpp \
     fsutils.cpp \
     main.cpp \
     mainwindow.cpp \
     makedirdialog.cpp \
-    panelview.cpp
+    panelview.cpp \
+    selectdelegate.cpp
 
 HEADERS += \
-    fsmodel.h \
     fsutils.h \
     mainwindow.h \
     makedirdialog.h \
-    panelview.h
+    panelview.h \
+    selectdelegate.h
 
 FORMS += \
     mainwindow.ui \

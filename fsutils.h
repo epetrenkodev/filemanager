@@ -13,6 +13,8 @@ public:
     static QFileInfoList getList(QStringList paths);
     static bool copy(QStringList paths, QString dest);
     static bool move(QStringList paths, QString dest);
+    static bool mkdir(QString newDir);
+    static bool remove(QStringList paths);
 
 private:
     static void warning(QString message);

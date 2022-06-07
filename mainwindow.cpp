@@ -1,8 +1,7 @@
 #include "mainwindow.h"
+#include "fsutils.h"
 #include "makedirdialog.h"
 #include "ui_mainwindow.h"
-
-#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -42,32 +41,68 @@ void MainWindow::initConnect()
     connect(ui->rightPanel, SIGNAL(dragCopy()), SLOT(copy()));
 }
 
+QStringList MainWindow::createFullPath(QString path, QStringList files, QString singleFile) const
+{
+    QStringList list;
+    if (source->selectedFiles().isEmpty()) {
+        list.append(path + QDir::separator() + singleFile);
+    } else {
+        for (QString &file : files) {
+            list.append(path + QDir::separator() + file);
+        }
+    }
+    return list;
+}
+
+int MainWindow::ask(QString icon, QString msg) const
+{
+    QMessageBox msgBox(QMessageBox::Question,
+                       "File Manager",
+                       msg,
+                       QMessageBox::Ok | QMessageBox::Cancel);
+    msgBox.setWindowIcon(QIcon(icon));
+    return msgBox.exec();
+}
+
 void MainWindow::copy()
 {
-    source->model->copyFiles(source->selectIndex(), target->currentPath());
+    FSUtils::copy(createFullPath(source->currentDir(),
+                                 source->selectedFiles(),
+                                 source->cuttentFile()),
+                  target->currentDir());
+    source->selectedListClear();
 }
 
 void MainWindow::rename()
 {
-    source->model->renameFiles(source->selectIndex(), target->currentPath());
+    FSUtils::move(createFullPath(source->currentDir(),
+                                 source->selectedFiles(),
+                                 source->cuttentFile()),
+                  target->currentDir());
+    source->selectedListClear();
 }
 
 void MainWindow::mkdir()
 {
+    QString path = source->currentDir();
+    if (path.isEmpty())
+        return;
     MakeDirDialog dialog;
-    if (dialog.exec() == QDialog::Accepted)
-        source->model->mkDir(source->selectIndex().parent(), dialog.dirName());
+    if (dialog.exec() == QDialog::Accepted) {
+        QString dirName = dialog.dirName();
+        if (dirName.isEmpty())
+            return;
+        FSUtils::mkdir(path + QDir::separator() + dirName);
+    }
 }
 
 void MainWindow::remove()
 {
-    QMessageBox msgBox(QMessageBox::Information,
-                       "File Manager",
-                       "Удалить выбранные файлы/каталоги?",
-                       QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setWindowIcon(QIcon(":/icons/app.png"));
-    if (msgBox.exec() == QMessageBox::Ok)
-        source->model->removeFiles(source->selectIndex());
+    if (ask(":/icons/app.png", "Удалить выбранные файлы/каталоги?") == QMessageBox::Ok) {
+        FSUtils::remove(
+            createFullPath(source->currentDir(), source->selectedFiles(), source->cuttentFile()));
+        source->selectedListClear();
+    }
 }
 
 void MainWindow::setSourcePanel()

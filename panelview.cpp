@@ -5,10 +5,9 @@
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDrag>
-#include <QMainWindow>
+#include <QFileSystemModel>
 #include <QMimeData>
 #include <QMouseEvent>
-#include <QProcess>
 #include <QUrl>
 
 PanelView::PanelView(QWidget *parent)
@@ -16,6 +15,8 @@ PanelView::PanelView(QWidget *parent)
     , ui(new Ui::PanelView)
 {
     ui->setupUi(this);
+
+    delegate = new SelectDelegate(selectedList, this);
 
     setAcceptDrops(true);
 
@@ -34,15 +35,30 @@ QModelIndex PanelView::selectIndex()
     return ui->tableView->currentIndex();
 }
 
-QString PanelView::currentPath()
+QString PanelView::currentDir()
 {
     return ui->currentPath->text();
 }
 
-// Init
+QString PanelView::cuttentFile()
+{
+    return ui->tableView->currentIndex().data().toString();
+}
+
+QStringList PanelView::selectedFiles() const
+{
+    return selectedList;
+}
+
+void PanelView::selectedListClear()
+{
+    selectedList.clear();
+    ui->tableView->viewport()->repaint();
+}
+
 void PanelView::initModel()
 {
-    model = new FSModel(this);
+    model = new QFileSystemModel;
     model->setRootPath(QDir::rootPath());
     model->setFilter(QDir::AllEntries | QDir::NoDot);
 }
@@ -50,6 +66,7 @@ void PanelView::initModel()
 void PanelView::initView()
 {
     ui->tableView->setModel(model);
+    ui->tableView->setItemDelegate(delegate);
 
     ui->tableView->setShowGrid(false);
     ui->tableView->setIconSize(QSize(14, 14));
@@ -78,7 +95,6 @@ void PanelView::initConnect()
     connect(model, SIGNAL(directoryLoaded(QString)), this, SLOT(dirLoaded()));
 }
 
-// Private function
 void PanelView::changeCurrentPath(const QModelIndex &index)
 {
     QString dirName = model->fileInfo(index).fileName();
@@ -96,10 +112,9 @@ void PanelView::changeCurrentPath(const QModelIndex &index)
 
     ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
 
-    model->clearSelect();
+    selectedList.clear();
 }
 
-// Events
 void PanelView::focusInEvent(QFocusEvent *focusEvent)
 {
     Q_UNUSED(focusEvent);
@@ -107,7 +122,6 @@ void PanelView::focusInEvent(QFocusEvent *focusEvent)
     ui->tableView->setFocus();
 }
 
-// Slots
 void PanelView::action(const QModelIndex &index)
 {
     QFileInfo fileinfo = model->fileInfo(index);
@@ -131,8 +145,15 @@ void PanelView::dirLoaded()
 
 void PanelView::selectFile(QModelIndex index)
 {
-    model->toggleIndex(index);
-    ui->tableView->selectRow(index.row());
+    QString fileName = index.data().toString();
+    if (fileName != "..") {
+        if (selectedList.contains(fileName))
+            selectedList.removeAll(fileName);
+        else
+            selectedList.append(fileName);
+        ui->tableView->selectRow(index.row());
+        ui->tableView->viewport()->repaint();
+    }
 }
 
 bool PanelView::eventFilter(QObject *watched, QEvent *event)
@@ -188,4 +209,17 @@ void PanelView::dropEvent(QDropEvent *event)
 {
     emit dragCopy();
     event->acceptProposedAction();
+}
+
+void PanelView::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Insert) {
+        selectFile(ui->tableView->currentIndex());
+        int currentRow = ui->tableView->currentIndex().row();
+        int countRow = model->rowCount(ui->tableView->currentIndex().parent());
+        if (currentRow < countRow) {
+            ui->tableView->selectRow(currentRow + 1);
+        }
+        ui->tableView->viewport()->repaint();
+    }
 }

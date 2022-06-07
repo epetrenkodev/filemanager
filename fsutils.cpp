@@ -1,6 +1,7 @@
 #include "fsutils.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QDirIterator>
 #include <QIcon>
 #include <QMessageBox>
@@ -56,9 +57,11 @@ bool FSUtils::copy(QStringList paths, QString dest)
             break;
 
         if (entry.isDir()) {
-            QDir().mkdir(dName);
+            bool res = QDir().mkdir(dName);
+            qDebug() << "mkdir" << dName << (res ? "OK" : "ERROR");
         } else {
-            QFile::copy(sName, dName);
+            bool res = QFile::copy(sName, dName);
+            qDebug() << "copy" << sName << dName << (res ? "OK" : "ERROR");
         }
     }
     return true;
@@ -66,37 +69,41 @@ bool FSUtils::copy(QStringList paths, QString dest)
 
 bool FSUtils::move(QStringList paths, QString dest)
 {
-    if (dest.isEmpty() || paths.isEmpty())
-        return false;
-    if (paths.contains(dest)) {
-        warning("Нельзя переместить каталог сам в себя");
+    copy(paths, dest);
+    remove(paths);
+    return true;
+}
+
+bool FSUtils::mkdir(QString newDir)
+{
+    QDir dir(newDir);
+    if (dir.exists()) {
+        warning("Каталог с таким именем уже существует!");
         return false;
     }
-    int pos = QFileInfo(paths[0]).path().size();
-    QFileInfoList copyList = getList(paths);
-    std::sort(copyList.begin(), copyList.end(), [](auto d1, auto d2) {
-        return d1.path() > d2.path();
-    });
-    int count = 1;
-    QProgressDialog progress("", "Отмена", 0, copyList.count());
-    progress.setFixedWidth(300);
-    progress.setWindowTitle("Перемещение");
-    progress.setWindowIcon(QIcon(":/icons/move.ico"));
-    for (QFileInfo &entry : copyList) {
-        QString sName = entry.filePath();
-        QString dName = dest + QDir::separator() + sName.mid(pos);
+    bool res = dir.mkpath(".");
+    qDebug() << "mkdir" << newDir << (res ? "OK" : "ERROR");
+    return res;
+}
 
-        progress.setLabelText(sName + " -> " + dName);
+bool FSUtils::remove(QStringList paths)
+{
+    int count = 1;
+    QProgressDialog progress("", "Отмена", 0, paths.size());
+    progress.setFixedWidth(300);
+    progress.setWindowTitle("Удаление");
+    progress.setWindowIcon(QIcon(":/icons/delete.ico"));
+
+    for (QString &file : paths) {
+        progress.setLabelText(file);
         progress.setValue(count++);
         qApp->processEvents();
-        if (progress.wasCanceled())
-            break;
+        bool res = QFile::moveToTrash(file);
+        qDebug() << "remove" << file << (res ? "OK" : "ERROR");
 
-        if (entry.isDir()) {
-            QDir().mkdir(dName);
-            QDir().rmdir(sName);
-        } else {
-            QFile::rename(sName, dName);
+        if (progress.wasCanceled()) {
+            return false;
+            break;
         }
     }
     return true;
@@ -104,5 +111,5 @@ bool FSUtils::move(QStringList paths, QString dest)
 
 void FSUtils::warning(QString message)
 {
-    QMessageBox(QMessageBox::Warning, "File Manager", message, QMessageBox::Ok).exec();
+    QMessageBox(QMessageBox::Warning, qApp->applicationName(), message, QMessageBox::Ok).exec();
 }

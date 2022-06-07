@@ -1,8 +1,8 @@
 #ifndef PANELVIEW_H
 #define PANELVIEW_H
 
-#include "fsmodel.h"
-
+#include "selectdelegate.h"
+#include <QFileSystemModel>
 #include <QWidget>
 
 namespace Ui {
@@ -14,25 +14,36 @@ class PanelView : public QWidget
     Q_OBJECT
 
 public:
-    FSModel *model = nullptr;
+    QFileSystemModel *model = nullptr;
     int prevDirRow = 0;
 
     explicit PanelView(QWidget *parent = nullptr);
     ~PanelView();
 
     QModelIndex selectIndex();
-    QString currentPath();
+    QString currentDir();
+    QString cuttentFile();
+    QStringList selectedFiles() const;
+
+    void selectedListClear();
+
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     Ui::PanelView *ui;
     QPoint m_dragStart;
+    QStringList selectedList;
+    SelectDelegate *delegate;
 
     void initModel();
     void initView();
     void initConnect();
     void changeCurrentPath(const QModelIndex &index);
-
     virtual void focusInEvent(QFocusEvent *focusEvent) override;
+
+protected:
+    virtual void dragEnterEvent(QDragEnterEvent *event) override;
+    virtual void dropEvent(QDropEvent *event) override;
 
 signals:
     void setSource();
@@ -44,14 +55,9 @@ private slots:
     void dirLoaded();
     void selectFile(QModelIndex);
 
-    // QObject interface
-public:
-    virtual bool eventFilter(QObject *watched, QEvent *event) override;
-
     // QWidget interface
 protected:
-    virtual void dragEnterEvent(QDragEnterEvent *event) override;
-    virtual void dropEvent(QDropEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent *event) override;
 };
 
 #endif // PANELVIEW_H

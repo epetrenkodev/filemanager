@@ -6,6 +6,8 @@
 #include <QMainWindow>
 #include <QShortcut>
 
+#include <QMessageBox>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -36,9 +38,8 @@ private:
 
     void intiShortcut();
     void initConnect();
-
-    //    bool copyDir(const QDir srcDir, const QDir dstDir);
-    //    bool removeDir(QDir dir);
+    QStringList createFullPath(QString path, QStringList files, QString singleFile) const;
+    int ask(QString icon, QString msg) const;
 
 private slots:
     //    void view();
@@ -48,6 +49,5 @@ private slots:
     void mkdir();
     void remove();
     void setSourcePanel();
-    //    void selectFile(QModelIndex);
 };
 #endif // MAINWINDOW_H
