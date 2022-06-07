@@ -21,7 +21,6 @@ private:
     QModelIndexList selectedIndex;
 
     bool copyDir(const QDir srcDir, const QDir dstDir);
-    QFileInfoList getList(QStringList files);
 };
 
 #endif // FSMODEL_H

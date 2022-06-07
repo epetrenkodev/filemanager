@@ -1,4 +1,5 @@
 #include "fsmodel.h"
+#include "fsutils.h"
 
 #include <QApplication>
 #include <QBrush>
@@ -65,93 +66,38 @@ void FSModel::removeFiles(QModelIndex file)
 
 void FSModel::copyFiles(QModelIndex source, QString destinationDir)
 {
-    if (destinationDir.isEmpty())
-        return;
+    QStringList copyList;
 
-    QFileInfoList list;
     if (selectedIndex.isEmpty()) {
-        list = getList(QStringList(filePath(source)));
+        copyList.append(filePath(source));
     } else {
         QStringList tmpList;
-        for (QModelIndex index : selectedIndex) {
-            tmpList << fileInfo(index).filePath();
-        }
-        list = getList(tmpList);
-    }
-
-    std::sort(list.begin(), list.end(), [](auto d1, auto d2) { return d1.path() < d2.path(); });
-
-    int pos = list[0].path().size();
-    int count = 1;
-    QProgressDialog progress;
-    progress.setMinimumDuration(0);
-    progress.setCancelButtonText("Отмена");
-    progress.setFixedWidth(300);
-    progress.setWindowTitle("Копирование");
-    progress.setWindowIcon(QIcon(":/icons/copy.ico"));
-    progress.setMaximum(list.count());
-
-    for (auto &f : list) {
-        progress.setLabelText(f.filePath() + " -> " + destinationDir + f.filePath().mid(pos));
-        progress.setValue(count++);
-        qApp->processEvents();
-        if (progress.wasCanceled())
-            break;
-        if (f.fileName() != "..") {
-            if (f.isDir()) {
-                QDir().mkdir(destinationDir + '/' + f.filePath().mid(pos));
-            } else {
-                QFile::copy(f.filePath(), destinationDir + '/' + f.filePath().mid(pos));
-            }
+        for (QModelIndex &index : selectedIndex) {
+            copyList.append(filePath(index));
         }
     }
+
+    FSUtils::copy(copyList, destinationDir);
+
     selectedIndex.clear();
     emit dataChanged(QModelIndex(), QModelIndex());
 }
 
 void FSModel::renameFiles(QModelIndex source, QString destinationDir)
 {
-    if (destinationDir.isEmpty())
-        return;
+    QStringList copyList;
 
-    QFileInfoList list;
     if (selectedIndex.isEmpty()) {
-        list = getList(QStringList(filePath(source)));
+        copyList.append(filePath(source));
     } else {
         QStringList tmpList;
-        for (QModelIndex index : selectedIndex) {
-            tmpList << fileInfo(index).filePath();
-        }
-        list = getList(tmpList);
-    }
-
-    std::sort(list.begin(), list.end(), [](auto d1, auto d2) { return d1.path() > d2.path(); });
-
-    int pos = list[0].path().size();
-    int count = 1;
-    QProgressDialog progress;
-    progress.setMinimumDuration(0);
-    progress.setCancelButtonText("Отмена");
-    progress.setFixedWidth(300);
-    progress.setWindowTitle("Перемещение");
-    progress.setWindowIcon(QIcon(":/icons/move.ico"));
-    progress.setMaximum(list.count());
-
-    for (auto &f : list) {
-        progress.setLabelText(f.filePath() + " -> " + destinationDir + f.filePath().mid(pos));
-        progress.setValue(count++);
-        qApp->processEvents();
-        if (progress.wasCanceled())
-            break;
-        if (f.fileName() != "..") {
-            if (f.isDir()) {
-                QDir().mkdir(destinationDir + f.filePath().mid(pos));
-                QDir().rmdir(f.filePath());
-            } else {
-                QFile::rename(f.filePath(), destinationDir + f.filePath().mid(pos));
-            }
+        for (QModelIndex &index : selectedIndex) {
+            copyList.append(filePath(index));
         }
     }
+
+    FSUtils::move(copyList, destinationDir);
+
     selectedIndex.clear();
     emit dataChanged(QModelIndex(), QModelIndex());
 }
@@ -165,21 +111,4 @@ void FSModel::mkDir(QModelIndex parent, QString dirName)
                     QMessageBox::Ok)
             .exec();
     }
-}
-
-QFileInfoList FSModel::getList(QStringList files)
-{
-    QFileInfoList list;
-    for (QString &entry : files) {
-        list << QFileInfo(entry);
-        QDirIterator di(entry, QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
-        while (di.hasNext()) {
-            di.next();
-            if (di.fileName() != "." && di.fileName() != "..") {
-                list << di.fileInfo();
-            }
-            qApp->processEvents();
-        }
-    }
-    return list;
 }

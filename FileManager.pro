@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++17
+CONFIG += c++14
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -10,18 +10,18 @@ CONFIG += c++17
 
 SOURCES += \
     fsmodel.cpp \
+    fsutils.cpp \
     main.cpp \
     mainwindow.cpp \
     makedirdialog.cpp \
-    panelview.cpp \
-    tableview.cpp
+    panelview.cpp
 
 HEADERS += \
     fsmodel.h \
+    fsutils.h \
     mainwindow.h \
     makedirdialog.h \
-    panelview.h \
-    tableview.h
+    panelview.h
 
 FORMS += \
     mainwindow.ui \

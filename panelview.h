@@ -15,6 +15,7 @@ class PanelView : public QWidget
 
 public:
     FSModel *model = nullptr;
+    int prevDirRow = 0;
 
     explicit PanelView(QWidget *parent = nullptr);
     ~PanelView();

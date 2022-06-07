@@ -71,7 +71,6 @@ void PanelView::initView()
 void PanelView::initConnect()
 {
     connect(ui->tableView, SIGNAL(activated(QModelIndex)), SLOT(action(QModelIndex)));
-    connect(ui->tableView, SIGNAL(selectFile(QModelIndex)), SLOT(selectFile(QModelIndex)));
 
     connect(ui->rootButton, SIGNAL(clicked()), ui->tableView, SLOT(reset()));
     connect(ui->homeButton, SIGNAL(clicked()), SLOT(on_homeClicked()));
@@ -86,14 +85,14 @@ void PanelView::changeCurrentPath(const QModelIndex &index)
     QModelIndex newIndex;
     if (dirName == "..") {
         newIndex = index.parent().parent();
-        ui->tableView->prevDirRow = index.parent().row();
+        prevDirRow = index.parent().row();
     } else {
         newIndex = index;
-        ui->tableView->prevDirRow = 0;
+        prevDirRow = 0;
     }
 
     ui->tableView->setRootIndex(newIndex);
-    ui->tableView->selectRow(ui->tableView->prevDirRow);
+    ui->tableView->selectRow(prevDirRow);
 
     ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
 
@@ -127,8 +126,7 @@ void PanelView::on_homeClicked()
 
 void PanelView::dirLoaded()
 {
-    ui->tableView->selectRow(ui->tableView->prevDirRow);
-    model->sort(0, Qt::AscendingOrder);
+    ui->tableView->selectRow(prevDirRow);
 }
 
 void PanelView::selectFile(QModelIndex index)
@@ -140,25 +138,39 @@ void PanelView::selectFile(QModelIndex index)
 bool PanelView::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched == ui->tableView->viewport()) {
-        if (event->type() == QEvent::MouseButtonPress) {
+        switch (event->type()) {
+        case QEvent::MouseButtonPress: {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
-            if (mouseEvent->button() == Qt::MouseButton::LeftButton) {
+            switch (mouseEvent->button()) {
+            case Qt::MouseButton::LeftButton:
                 m_dragStart = mouseEvent->pos();
+                break;
+            case Qt::MouseButton::RightButton:
+                selectFile(ui->tableView->indexAt(mouseEvent->pos()));
+                return true;
+                break;
+            default:
+                break;
             }
-        } else if (event->type() == QEvent::MouseMove) {
+        } break;
+        case QEvent::MouseMove: {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
             if ((mouseEvent->buttons() & Qt::LeftButton)
                 && QApplication::startDragDistance()
                        <= (mouseEvent->pos() - m_dragStart).manhattanLength()) {
                 QDrag *drag = new QDrag(this);
                 QMimeData *mimeData = new QMimeData;
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 QList<QUrl> list;
                 list.append(QUrl::fromLocalFile(model->fileInfo(selectIndex()).filePath()));
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 mimeData->setUrls(list);
                 drag->setMimeData(mimeData);
-
                 drag->exec(Qt::MoveAction);
             }
+        } break;
+        default:
+            break;
         }
     }
     return false;
@@ -174,11 +186,6 @@ void PanelView::dragEnterEvent(QDragEnterEvent *event)
 
 void PanelView::dropEvent(QDropEvent *event)
 {
-    //    qDebug() << event->mimeData()->urls();
-    //    QString name(event->mimeData()->urls()[0].toLocalFile());
-    //    QModelIndex modelIndex(model->index(name));
-    //    qDebug() << "copy " << model->fileInfo(modelIndex).filePath() << " to " << currentPath();
-    //    model->copyFiles(modelIndex, currentPath());
     emit dragCopy();
     event->acceptProposedAction();
 }
