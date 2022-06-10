@@ -2,11 +2,8 @@
 #define MAINWINDOW_H
 
 #include "panelview.h"
-
 #include <QMainWindow>
 #include <QShortcut>
-
-#include <QMessageBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,14 +16,12 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private:
     Ui::MainWindow *ui;
 
-    QShortcut *keyF3;
-    QShortcut *keyF4;
     QShortcut *keyF5;
     QShortcut *keyF6;
     QShortcut *keyF7;
@@ -42,8 +37,6 @@ private:
     int ask(QString icon, QString msg) const;
 
 private slots:
-    //    void view();
-    //    void edit();
     void copy();
     void rename();
     void mkdir();

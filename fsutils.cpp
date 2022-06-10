@@ -11,23 +11,6 @@ FSUtils::FSUtils(QObject *parent)
     : QObject{parent}
 {}
 
-QFileInfoList FSUtils::getList(QStringList paths)
-{
-    QFileInfoList list;
-    for (QString &path : paths) {
-        list << QFileInfo(path);
-        QDirIterator di(path, QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
-        while (di.hasNext()) {
-            di.next();
-            if (di.fileName() != "." && di.fileName() != "..") {
-                list << di.fileInfo();
-            }
-            qApp->processEvents();
-        }
-    }
-    return list;
-}
-
 bool FSUtils::copy(QStringList paths, QString dest)
 {
     if (dest.isEmpty() || paths.isEmpty())
@@ -112,4 +95,21 @@ bool FSUtils::remove(QStringList paths)
 void FSUtils::warning(QString message)
 {
     QMessageBox(QMessageBox::Warning, qApp->applicationName(), message, QMessageBox::Ok).exec();
+}
+
+QFileInfoList FSUtils::getList(QStringList paths)
+{
+    QFileInfoList list;
+    for (QString &path : paths) {
+        list << QFileInfo(path);
+        QDirIterator di(path, QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
+        while (di.hasNext()) {
+            di.next();
+            if (di.fileName() != "." && di.fileName() != "..") {
+                list << di.fileInfo();
+            }
+            qApp->processEvents();
+        }
+    }
+    return list;
 }

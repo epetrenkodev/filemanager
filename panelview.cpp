@@ -16,8 +16,6 @@ PanelView::PanelView(QWidget *parent)
 {
     ui->setupUi(this);
 
-    delegate = new SelectDelegate(selectedList, this);
-
     setAcceptDrops(true);
 
     initModel();
@@ -28,11 +26,6 @@ PanelView::PanelView(QWidget *parent)
 PanelView::~PanelView()
 {
     delete ui;
-}
-
-QModelIndex PanelView::selectIndex()
-{
-    return ui->tableView->currentIndex();
 }
 
 QString PanelView::currentDir()
@@ -58,14 +51,18 @@ void PanelView::selectedListClear()
 
 void PanelView::initModel()
 {
-    model = new QFileSystemModel;
+    model = new QFileSystemModel(this);
+    proxy = new SortProxy(this);
+    delegate = new SelectDelegate(selectedList, this);
+
     model->setRootPath(QDir::rootPath());
     model->setFilter(QDir::AllEntries | QDir::NoDot);
+    proxy->setSourceModel(model);
 }
 
 void PanelView::initView()
 {
-    ui->tableView->setModel(model);
+    ui->tableView->setModel(proxy);
     ui->tableView->setItemDelegate(delegate);
 
     ui->tableView->setShowGrid(false);
@@ -83,6 +80,7 @@ void PanelView::initView()
     ui->tableView->verticalHeader()->setDefaultSectionSize(16);
 
     ui->tableView->viewport()->installEventFilter(this);
+    ui->tableView->sortByColumn(2, Qt::SortOrder::AscendingOrder);
 }
 
 void PanelView::initConnect()
@@ -97,7 +95,7 @@ void PanelView::initConnect()
 
 void PanelView::changeCurrentPath(const QModelIndex &index)
 {
-    QString dirName = model->fileInfo(index).fileName();
+    QString dirName = index.data(QFileSystemModel::FileNameRole).toString();
     QModelIndex newIndex;
     if (dirName == "..") {
         newIndex = index.parent().parent();
@@ -110,7 +108,8 @@ void PanelView::changeCurrentPath(const QModelIndex &index)
     ui->tableView->setRootIndex(newIndex);
     ui->tableView->selectRow(prevDirRow);
 
-    ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
+    ui->currentPath->setText(
+        ui->tableView->rootIndex().data(QFileSystemModel::FilePathRole).toString());
 
     selectedList.clear();
 }
@@ -124,7 +123,7 @@ void PanelView::focusInEvent(QFocusEvent *focusEvent)
 
 void PanelView::action(const QModelIndex &index)
 {
-    QFileInfo fileinfo = model->fileInfo(index);
+    QFileInfo fileinfo = QFileInfo(index.data(QFileSystemModel::FilePathRole).toString());
     if (fileinfo.isDir()) {
         changeCurrentPath(index);
     } else if (fileinfo.isFile()) {
@@ -134,8 +133,9 @@ void PanelView::action(const QModelIndex &index)
 
 void PanelView::on_homeClicked()
 {
-    ui->tableView->setRootIndex(model->index(QDir::homePath()));
-    ui->currentPath->setText(model->filePath(ui->tableView->rootIndex()));
+    ui->tableView->setRootIndex(proxy->mapFromSource(model->index(QDir::homePath())));
+    ui->currentPath->setText(
+        ui->tableView->rootIndex().data(QFileSystemModel::FilePathRole).toString());
 }
 
 void PanelView::dirLoaded()
@@ -181,10 +181,10 @@ bool PanelView::eventFilter(QObject *watched, QEvent *event)
                        <= (mouseEvent->pos() - m_dragStart).manhattanLength()) {
                 QDrag *drag = new QDrag(this);
                 QMimeData *mimeData = new QMimeData;
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 QList<QUrl> list;
-                list.append(QUrl::fromLocalFile(model->fileInfo(selectIndex()).filePath()));
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                for (QString &file : selectedList) {
+                    list.append(QUrl::fromLocalFile(currentDir() + QDir::separator() + file));
+                }
                 mimeData->setUrls(list);
                 drag->setMimeData(mimeData);
                 drag->exec(Qt::MoveAction);
@@ -216,7 +216,7 @@ void PanelView::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Insert) {
         selectFile(ui->tableView->currentIndex());
         int currentRow = ui->tableView->currentIndex().row();
-        int countRow = model->rowCount(ui->tableView->currentIndex().parent());
+        int countRow = proxy->rowCount(ui->tableView->currentIndex().parent());
         if (currentRow < countRow) {
             ui->tableView->selectRow(currentRow + 1);
         }

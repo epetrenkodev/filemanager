@@ -14,14 +14,16 @@ SOURCES += \
     mainwindow.cpp \
     makedirdialog.cpp \
     panelview.cpp \
-    selectdelegate.cpp
+    selectdelegate.cpp \
+    sortproxy.cpp
 
 HEADERS += \
     fsutils.h \
     mainwindow.h \
     makedirdialog.h \
     panelview.h \
-    selectdelegate.h
+    selectdelegate.h \
+    sortproxy.h
 
 FORMS += \
     mainwindow.ui \
