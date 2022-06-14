@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 #include "ui_panelview.h"
 
+#include <QClipboard>
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDrag>
@@ -20,6 +21,8 @@ PanelView::PanelView(QWidget *parent)
 
     initModel();
     initView();
+    action = new Action(this);
+    initMenu();
     initConnect();
 }
 
@@ -83,14 +86,19 @@ void PanelView::initView()
     ui->tableView->sortByColumn(2, Qt::SortOrder::AscendingOrder);
 }
 
+void PanelView::initMenu()
+{
+    menu = new QMenu(this);
+    menu->addAction(action->copy);
+}
+
 void PanelView::initConnect()
 {
-    connect(ui->tableView, SIGNAL(activated(QModelIndex)), SLOT(action(QModelIndex)));
-
-    connect(ui->rootButton, SIGNAL(clicked()), ui->tableView, SLOT(reset()));
-    connect(ui->homeButton, SIGNAL(clicked()), SLOT(on_homeClicked()));
-
-    connect(model, SIGNAL(directoryLoaded(QString)), this, SLOT(dirLoaded()));
+    connect(ui->tableView, &QAbstractItemView::activated, this, &PanelView::activated);
+    connect(ui->rootButton, &QAbstractButton::clicked, ui->tableView, &QAbstractItemView::reset);
+    connect(ui->homeButton, &QAbstractButton::clicked, this, &PanelView::on_homeClicked);
+    connect(model, &QFileSystemModel::directoryLoaded, this, &PanelView::dirLoaded);
+    connect(action->copy, &QAction::triggered, this, &PanelView::copyToClipboard);
 }
 
 void PanelView::changeCurrentPath(const QModelIndex &index)
@@ -121,7 +129,7 @@ void PanelView::focusInEvent(QFocusEvent *focusEvent)
     ui->tableView->setFocus();
 }
 
-void PanelView::action(const QModelIndex &index)
+void PanelView::activated(const QModelIndex &index)
 {
     QFileInfo fileinfo = QFileInfo(index.data(QFileSystemModel::FilePathRole).toString());
     if (fileinfo.isDir()) {
@@ -156,6 +164,19 @@ void PanelView::selectFile(QModelIndex index)
     }
 }
 
+void PanelView::copyToClipboard()
+{
+    qDebug() << "copy clipboard";
+    QClipboard *clipboard = QApplication::clipboard();
+    QMimeData *mimeData = new QMimeData();
+    QList<QUrl> list;
+    for (QString &file : selectedList) {
+        list.append(QUrl::fromLocalFile(currentDir() + QDir::separator() + file));
+    }
+    mimeData->setUrls(list);
+    clipboard->setMimeData(mimeData);
+}
+
 bool PanelView::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched == ui->tableView->viewport()) {
@@ -165,13 +186,23 @@ bool PanelView::eventFilter(QObject *watched, QEvent *event)
             switch (mouseEvent->button()) {
             case Qt::MouseButton::LeftButton:
                 m_dragStart = mouseEvent->pos();
+                return false;
                 break;
             case Qt::MouseButton::RightButton:
                 selectFile(ui->tableView->indexAt(mouseEvent->pos()));
+                contextMenuPressTime = QTime::currentTime();
                 return true;
                 break;
             default:
+                return false;
                 break;
+            }
+        } break;
+        case QEvent::MouseButtonRelease: {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
+            if (mouseEvent->button() == Qt::MouseButton::RightButton
+                && contextMenuPressTime.msecsTo(QTime::currentTime()) > 500) {
+                menu->exec(mouseEvent->globalPos());
             }
         } break;
         case QEvent::MouseMove: {

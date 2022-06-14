@@ -1,9 +1,12 @@
 #ifndef PANELVIEW_H
 #define PANELVIEW_H
 
+#include "action.h"
 #include "selectdelegate.h"
 #include "sortproxy.h"
 #include <QFileSystemModel>
+#include <QMenu>
+#include <QTime>
 #include <QWidget>
 
 namespace Ui {
@@ -23,7 +26,6 @@ public:
     QStringList selectedFiles() const;
 
     void selectedListClear();
-    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
     Ui::PanelView *ui;
@@ -33,9 +35,13 @@ private:
     SortProxy *proxy;
     SelectDelegate *delegate;
     int prevDirRow = 0;
+    QTime contextMenuPressTime;
+    QMenu *menu;
+    Action *action;
 
     void initModel();
     void initView();
+    void initMenu();
     void initConnect();
     void changeCurrentPath(const QModelIndex &index);
     virtual void focusInEvent(QFocusEvent *focusEvent) override;
@@ -44,16 +50,18 @@ protected:
     virtual void dragEnterEvent(QDragEnterEvent *event) override;
     virtual void dropEvent(QDropEvent *event) override;
     virtual void keyPressEvent(QKeyEvent *event) override;
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
 signals:
     void setSource();
     void dragCopy();
 
 private slots:
-    void action(const QModelIndex &index);
+    void activated(const QModelIndex &index);
     void on_homeClicked();
     void dirLoaded();
     void selectFile(QModelIndex);
+    void copyToClipboard();
 };
 
 #endif // PANELVIEW_H

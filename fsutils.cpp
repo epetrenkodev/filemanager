@@ -7,16 +7,31 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 
+bool FSUtils::inProgress = false;
+
 FSUtils::FSUtils(QObject *parent)
     : QObject{parent}
 {}
 
 bool FSUtils::copy(QStringList paths, QString dest)
 {
-    if (dest.isEmpty() || paths.isEmpty())
+    if (inProgress)
         return false;
+    inProgress = true;
+    QProgressDialog progress("", "Отмена", 0, 0);
+    progress.setMinimumDuration(0);
+    progress.setFixedWidth(300);
+    progress.setWindowTitle("Копирование");
+    progress.setWindowIcon(QIcon(":/icons/copy.ico"));
+    progress.show();
+
+    if (dest.isEmpty() || paths.isEmpty()) {
+        inProgress = false;
+        return false;
+    }
     if (paths.contains(dest)) {
         warning("Нельзя скопровать каталог сам в себя");
+        inProgress = false;
         return false;
     }
     int pos = QFileInfo(paths[0]).path().size();
@@ -25,10 +40,13 @@ bool FSUtils::copy(QStringList paths, QString dest)
         return d1.path() < d2.path();
     });
     int count = 1;
-    QProgressDialog progress("", "Отмена", 0, copyList.count());
-    progress.setFixedWidth(300);
-    progress.setWindowTitle("Копирование");
-    progress.setWindowIcon(QIcon(":/icons/copy.ico"));
+
+    progress.setMaximum(copyList.count());
+    if (progress.wasCanceled()) {
+        inProgress = false;
+        return false;
+    }
+
     for (QFileInfo &entry : copyList) {
         QString sName = entry.filePath();
         QString dName = dest + QDir::separator() + sName.mid(pos);
@@ -47,6 +65,7 @@ bool FSUtils::copy(QStringList paths, QString dest)
             qDebug() << "copy" << sName << dName << (res ? "OK" : "ERROR");
         }
     }
+    inProgress = false;
     return true;
 }
 
@@ -76,6 +95,7 @@ bool FSUtils::remove(QStringList paths)
     progress.setFixedWidth(300);
     progress.setWindowTitle("Удаление");
     progress.setWindowIcon(QIcon(":/icons/delete.ico"));
+    progress.show();
 
     for (QString &file : paths) {
         progress.setLabelText(file);

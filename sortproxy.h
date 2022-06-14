@@ -9,6 +9,10 @@ class SortProxy : public QSortFilterProxyModel
 
 public:
     explicit SortProxy(QObject *parent = nullptr);
+
+    // QSortFilterProxyModel interface
+protected:
+    virtual bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override;
 };
 
 #endif // SORTPROXY_H

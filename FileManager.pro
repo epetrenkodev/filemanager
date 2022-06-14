@@ -9,6 +9,7 @@ CONFIG += c++14
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    action.cpp \
     fsutils.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
     sortproxy.cpp
 
 HEADERS += \
+    action.h \
     fsutils.h \
     mainwindow.h \
     makedirdialog.h \
@@ -39,5 +41,17 @@ RESOURCES += \
     icons.qrc
 
 DISTFILES += \
+    icons/about.ico \
+    icons/app.png \
+    icons/copy.ico \
+    icons/copy_to_folder.ico \
+    icons/cut.ico \
+    icons/delete.ico \
+    icons/exit.ico \
     icons/go-home.ico \
+    icons/help.ico \
+    icons/home.ico \
+    icons/move.ico \
+    icons/new_folder.ico \
+    icons/paste.ico \
     icons/stock_exit.ico

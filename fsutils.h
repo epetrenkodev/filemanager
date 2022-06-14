@@ -17,6 +17,7 @@ public:
     static bool remove(QStringList paths);
 
 private:
+    static bool inProgress;
     static void warning(QString message);
     static QFileInfoList getList(QStringList paths);
 };
