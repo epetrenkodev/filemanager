@@ -1,5 +1,6 @@
 #include "panelview.h"
 #include "mainwindow.h"
+#include "propertiesdialog.h"
 #include "ui_panelview.h"
 
 #include <QClipboard>
@@ -36,7 +37,7 @@ QString PanelView::currentDir()
     return ui->currentPath->text();
 }
 
-QString PanelView::cuttentFile()
+QString PanelView::currentFile()
 {
     return ui->tableView->currentIndex().data().toString();
 }
@@ -90,6 +91,7 @@ void PanelView::initMenu()
 {
     menu = new QMenu(this);
     menu->addAction(action->copy);
+    menu->addAction(action->properties);
 }
 
 void PanelView::initConnect()
@@ -99,6 +101,7 @@ void PanelView::initConnect()
     connect(ui->homeButton, &QAbstractButton::clicked, this, &PanelView::on_homeClicked);
     connect(model, &QFileSystemModel::directoryLoaded, this, &PanelView::dirLoaded);
     connect(action->copy, &QAction::triggered, this, &PanelView::copyToClipboard);
+    connect(action->properties, &QAction::triggered, this, &PanelView::properties);
 }
 
 void PanelView::changeCurrentPath(const QModelIndex &index)
@@ -175,6 +178,12 @@ void PanelView::copyToClipboard()
     }
     mimeData->setUrls(list);
     clipboard->setMimeData(mimeData);
+}
+
+void PanelView::properties()
+{
+    PropertiesDialog dialog(currentDir() + QDir::separator() + currentFile());
+    dialog.exec();
 }
 
 bool PanelView::eventFilter(QObject *watched, QEvent *event)

@@ -9,6 +9,7 @@ class Action : public QObject
     Q_OBJECT
 public:
     QAction *copy;
+    QAction *properties;
 
     explicit Action(QObject *parent = nullptr);
 

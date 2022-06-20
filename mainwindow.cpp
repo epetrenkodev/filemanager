@@ -3,7 +3,9 @@
 #include "makedirdialog.h"
 #include "ui_mainwindow.h"
 
+#include <QDebug>
 #include <QMessageBox>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,7 +27,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::intiShortcut()
 {
-    //keyF3 = new QShortcut(Qt::Key_F3, this, SLOT(view()));
+    keyF3 = new QShortcut(Qt::Key_F3, this, SLOT(view()));
     //keyF4 = new QShortcut(Qt::Key_F4, this, SLOT(edit()));
     keyF5 = new QShortcut(Qt::Key_F5, this, SLOT(copy()));
     keyF6 = new QShortcut(Qt::Key_F6, this, SLOT(rename()));
@@ -66,11 +68,22 @@ int MainWindow::ask(QString icon, QString msg) const
     return msgBox.exec();
 }
 
+void MainWindow::view()
+{
+    QString fileName = source->currentDir() + QDir::separator() + source->currentFile();
+    QFileInfo file(fileName);
+    if (!file.isFile())
+        return;
+    qDebug() << "viewer" << fileName;
+    QProcess viewer;
+    viewer.startDetached("viewer", QStringList(fileName));
+}
+
 void MainWindow::copy()
 {
     FSUtils::copy(createFullPath(source->currentDir(),
                                  source->selectedFiles(),
-                                 source->cuttentFile()),
+                                 source->currentFile()),
                   target->currentDir());
     source->selectedListClear();
 }
@@ -79,7 +92,7 @@ void MainWindow::rename()
 {
     FSUtils::move(createFullPath(source->currentDir(),
                                  source->selectedFiles(),
-                                 source->cuttentFile()),
+                                 source->currentFile()),
                   target->currentDir());
     source->selectedListClear();
 }
@@ -102,7 +115,7 @@ void MainWindow::remove()
 {
     if (ask(":/icons/app.png", "Удалить выбранные файлы/каталоги?") == QMessageBox::Ok) {
         FSUtils::remove(
-            createFullPath(source->currentDir(), source->selectedFiles(), source->cuttentFile()));
+            createFullPath(source->currentDir(), source->selectedFiles(), source->currentFile()));
         source->selectedListClear();
     }
 }

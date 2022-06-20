@@ -22,7 +22,7 @@ public:
     ~PanelView();
 
     QString currentDir();
-    QString cuttentFile();
+    QString currentFile();
     QStringList selectedFiles() const;
 
     void selectedListClear();
@@ -62,6 +62,7 @@ private slots:
     void dirLoaded();
     void selectFile(QModelIndex);
     void copyToClipboard();
+    void properties();
 };
 
 #endif // PANELVIEW_H

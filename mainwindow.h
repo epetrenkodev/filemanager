@@ -22,6 +22,7 @@ public:
 private:
     Ui::MainWindow *ui;
 
+    QShortcut *keyF3;
     QShortcut *keyF5;
     QShortcut *keyF6;
     QShortcut *keyF7;
@@ -37,6 +38,7 @@ private:
     int ask(QString icon, QString msg) const;
 
 private slots:
+    void view();
     void copy();
     void rename();
     void mkdir();

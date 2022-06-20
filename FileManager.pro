@@ -15,6 +15,7 @@ SOURCES += \
     mainwindow.cpp \
     makedirdialog.cpp \
     panelview.cpp \
+    propertiesdialog.cpp \
     selectdelegate.cpp \
     sortproxy.cpp
 
@@ -24,13 +25,15 @@ HEADERS += \
     mainwindow.h \
     makedirdialog.h \
     panelview.h \
+    propertiesdialog.h \
     selectdelegate.h \
     sortproxy.h
 
 FORMS += \
     mainwindow.ui \
     makedirdialog.ui \
-    panelview.ui
+    panelview.ui \
+    propertiesdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
