@@ -13,7 +13,9 @@ PropertiesDialog::PropertiesDialog(QString file, QWidget *parent)
 {
     ui->setupUi(this);
 
+#ifdef WIN32
     qt_ntfs_permission_lookup++;
+#endif
 
     QFileInfo fileInfo(file);
     setWindowTitle("Свойства: " + fileInfo.fileName());
