@@ -11,5 +11,4 @@ Action::Action(QObject *parent)
     properties = new QAction("Свойства", this);
     properties->setAutoRepeat(false);
     properties->setIcon(QIcon(":/properties.ico"));
-    //properties->setShortcut(QKeySequence::);
 }

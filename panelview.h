@@ -4,9 +4,13 @@
 #include "action.h"
 #include "selectdelegate.h"
 #include "sortproxy.h"
+#include <QAction>
 #include <QFileSystemModel>
 #include <QMenu>
+#include <QSpacerItem>
 #include <QTime>
+#include <QTimer>
+#include <QToolButton>
 #include <QWidget>
 
 namespace Ui {
@@ -38,6 +42,9 @@ private:
     QTime contextMenuPressTime;
     QMenu *menu;
     Action *action;
+    QList<QToolButton *> driveButtonList;
+    QSpacerItem *horizontalSpacer = nullptr;
+    QTimer timer;
 
     void initModel();
     void initView();
@@ -58,11 +65,13 @@ signals:
 
 private slots:
     void activated(const QModelIndex &index);
-    void on_homeClicked();
+    void createDriveButton();
     void dirLoaded();
     void selectFile(QModelIndex);
     void copyToClipboard();
     void properties();
+    void changeDrive();
+    void home();
 };
 
 #endif // PANELVIEW_H

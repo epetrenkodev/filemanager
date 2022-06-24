@@ -3,6 +3,7 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QFileIconProvider>
 #include <QFileInfo>
 
 extern Q_CORE_EXPORT int qt_ntfs_permission_lookup;
@@ -18,7 +19,12 @@ PropertiesDialog::PropertiesDialog(QString file, QWidget *parent)
 #endif
 
     QFileInfo fileInfo(file);
+
     setWindowTitle("Свойства: " + fileInfo.fileName());
+
+    QFileIconProvider iconProvider;
+
+    ui->fileIcon->setPixmap(iconProvider.icon(fileInfo).pixmap(32));
 
     ui->type->setText(fileInfo.isDir() ? "Папка" : "Файл");
 
@@ -32,7 +38,7 @@ PropertiesDialog::PropertiesDialog(QString file, QWidget *parent)
     ui->owner->setText(fileInfo.owner());
     ui->group->setText(fileInfo.group());
 
-    QString perm("%1%2%3 %4%5%6 %7%8%9");
+    QString perm("%1%2%3%4%5%6%7%8%9");
     ui->attr->setText(perm.arg(fileInfo.permission(QFile::ReadOwner) ? "r" : "-")
                           .arg(fileInfo.permission(QFile::WriteOwner) ? "w" : "-")
                           .arg(fileInfo.permission(QFile::ExeOwner) ? "x" : "-")

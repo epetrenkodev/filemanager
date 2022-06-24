@@ -8,6 +8,7 @@
 #include <QDesktopServices>
 #include <QDrag>
 #include <QFileSystemModel>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QUrl>
@@ -59,13 +60,16 @@ void PanelView::initModel()
     proxy = new SortProxy(this);
     delegate = new SelectDelegate(selectedList, this);
 
-    model->setRootPath(QDir::rootPath());
+    //model->setRootPath(QDir::rootPath());
+    model->setRootPath(":/");
     model->setFilter(QDir::AllEntries | QDir::NoDot);
     proxy->setSourceModel(model);
 }
 
 void PanelView::initView()
 {
+    timer.start(500);
+
     ui->tableView->setModel(proxy);
     ui->tableView->setItemDelegate(delegate);
 
@@ -85,6 +89,8 @@ void PanelView::initView()
 
     ui->tableView->viewport()->installEventFilter(this);
     ui->tableView->sortByColumn(2, Qt::SortOrder::AscendingOrder);
+
+    changeCurrentPath(proxy->mapFromSource(model->index(QDir::homePath())));
 }
 
 void PanelView::initMenu()
@@ -97,11 +103,11 @@ void PanelView::initMenu()
 void PanelView::initConnect()
 {
     connect(ui->tableView, &QAbstractItemView::activated, this, &PanelView::activated);
-    connect(ui->rootButton, &QAbstractButton::clicked, ui->tableView, &QAbstractItemView::reset);
-    connect(ui->homeButton, &QAbstractButton::clicked, this, &PanelView::on_homeClicked);
     connect(model, &QFileSystemModel::directoryLoaded, this, &PanelView::dirLoaded);
     connect(action->copy, &QAction::triggered, this, &PanelView::copyToClipboard);
     connect(action->properties, &QAction::triggered, this, &PanelView::properties);
+    connect(&timer, &QTimer::timeout, this, &PanelView::createDriveButton);
+    connect(ui->homeButton, &QAbstractButton::clicked, this, &PanelView::home);
 }
 
 void PanelView::changeCurrentPath(const QModelIndex &index)
@@ -142,11 +148,29 @@ void PanelView::activated(const QModelIndex &index)
     }
 }
 
-void PanelView::on_homeClicked()
+void PanelView::createDriveButton()
 {
-    ui->tableView->setRootIndex(proxy->mapFromSource(model->index(QDir::homePath())));
-    ui->currentPath->setText(
-        ui->tableView->rootIndex().data(QFileSystemModel::FilePathRole).toString());
+    timer.stop();
+
+    if (!driveButtonList.isEmpty()) {
+        for (auto &button : driveButtonList) {
+            ui->horizontalLayout->removeWidget(button);
+        }
+        driveButtonList.clear();
+        ui->horizontalLayout->removeItem(horizontalSpacer);
+    }
+
+    for (int i = 0; i < proxy->rowCount(); i++) {
+        QToolButton *button = new QToolButton(this);
+        button->setText(proxy->index(i, 0).data(QFileSystemModel::FileNameRole).toString());
+        button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+        connect(button, &QAbstractButton::clicked, this, &PanelView::changeDrive);
+        driveButtonList.append(button);
+        ui->horizontalLayout->addWidget(button);
+    }
+
+    horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    ui->horizontalLayout->addItem(horizontalSpacer);
 }
 
 void PanelView::dirLoaded()
@@ -184,6 +208,18 @@ void PanelView::properties()
 {
     PropertiesDialog dialog(currentDir() + QDir::separator() + currentFile());
     dialog.exec();
+}
+
+void PanelView::changeDrive()
+{
+    QString drive = qobject_cast<QToolButton *>(sender())->text();
+    qDebug() << "change drive" << drive;
+    changeCurrentPath(proxy->mapFromSource(model->index(drive)));
+}
+
+void PanelView::home()
+{
+    changeCurrentPath(proxy->mapFromSource(model->index(QDir::homePath())));
 }
 
 bool PanelView::eventFilter(QObject *watched, QEvent *event)
@@ -227,7 +263,7 @@ bool PanelView::eventFilter(QObject *watched, QEvent *event)
                 }
                 mimeData->setUrls(list);
                 drag->setMimeData(mimeData);
-                drag->exec(Qt::MoveAction);
+                drag->exec(Qt::CopyAction);
             }
         } break;
         default:
@@ -247,7 +283,8 @@ void PanelView::dragEnterEvent(QDragEnterEvent *event)
 
 void PanelView::dropEvent(QDropEvent *event)
 {
-    emit dragCopy();
+    if (event->source() != this)
+        emit dragCopy();
     event->acceptProposedAction();
 }
 

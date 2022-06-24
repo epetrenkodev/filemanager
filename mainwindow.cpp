@@ -38,11 +38,17 @@ void MainWindow::intiShortcut()
 
 void MainWindow::initConnect()
 {
-    connect(ui->leftPanel, SIGNAL(setSource()), SLOT(setSourcePanel()));
-    connect(ui->rightPanel, SIGNAL(setSource()), SLOT(setSourcePanel()));
+    connect(ui->leftPanel, &PanelView::setSource, this, &MainWindow::setSourcePanel);
+    connect(ui->rightPanel, &PanelView::setSource, this, &MainWindow::setSourcePanel);
 
-    connect(ui->leftPanel, SIGNAL(dragCopy()), SLOT(copy()));
-    connect(ui->rightPanel, SIGNAL(dragCopy()), SLOT(copy()));
+    connect(ui->leftPanel, &PanelView::dragCopy, this, &MainWindow::copy);
+    connect(ui->rightPanel, &PanelView::dragCopy, this, &MainWindow::copy);
+
+    connect(ui->pushButton_f3, &QAbstractButton::clicked, this, &MainWindow::view);
+    connect(ui->pushButton_f5, &QAbstractButton::clicked, this, &MainWindow::copy);
+    connect(ui->pushButton_f6, &QAbstractButton::clicked, this, &MainWindow::rename);
+    connect(ui->pushButton_f7, &QAbstractButton::clicked, this, &MainWindow::mkdir);
+    connect(ui->pushButton_f8, &QAbstractButton::clicked, this, &MainWindow::remove);
 }
 
 QStringList MainWindow::createFullPath(QString path, QStringList files, QString singleFile) const
@@ -74,7 +80,6 @@ void MainWindow::view()
     QFileInfo file(fileName);
     if (!file.isFile())
         return;
-    qDebug() << "viewer" << fileName;
     QProcess viewer;
     viewer.startDetached("viewer", QStringList(fileName));
 }
